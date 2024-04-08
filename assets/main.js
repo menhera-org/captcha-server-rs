@@ -9,13 +9,13 @@ const redirectUrl = url.searchParams.get('redirect-url');
 
 let invalidRequest = false;
 if (requestToken) {
-    inputRequestToken.value = request
+    inputRequestToken.value = requestToken;
 } else {
     invalidRequest = true;
 }
 
 if (redirectUrl) {
-    inputRedirectUrl.value = redirectUrl
+    inputRedirectUrl.value = redirectUrl;
 } else {
     invalidRequest = true;
 }
