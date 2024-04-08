@@ -114,7 +114,7 @@ async fn handler_submit(
         let field = if let Some(field) = field {
             field
         } else {
-            continue;
+            break;
         };
 
         let field_name = field.name().unwrap_or("");
@@ -179,6 +179,7 @@ async fn handler_submit(
     let response = match response {
         Ok(response) => response,
         Err(e) => {
+            eprintln!("Recaptcha request failed: {}", e);
             return (StatusCode::INTERNAL_SERVER_ERROR, format!("Recaptcha request failed: {}", e)).into_response();
         }
     };
@@ -189,6 +190,7 @@ async fn handler_submit(
         return (StatusCode::INTERNAL_SERVER_ERROR, "Recaptcha response is invalid.").into_response();
     };
 
+    eprintln!("Recaptcha response: {:?}", response.success);
     if !response.success {
         return (StatusCode::BAD_REQUEST, "Recaptcha response is invalid.").into_response();
     }
