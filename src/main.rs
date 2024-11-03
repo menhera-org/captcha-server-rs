@@ -25,6 +25,8 @@ use axum::http::{
 
 use base64::prelude::*;
 
+use url::Url;
+
 use tower_http::services::ServeDir;
 
 use ed25519_dalek::{SigningKey, Signer};
@@ -90,7 +92,7 @@ async fn handler_submit(
         return (StatusCode::INTERNAL_SERVER_ERROR, "Private key is not set.").into_response();
     }
 
-    let private_key = if let Ok(private_key) = BASE64_STANDARD.decode(private_key) {
+    let private_key = if let Ok(private_key) = BASE64_STANDARD.decode(private_key.trim()) {
         private_key
     } else {
         return (StatusCode::INTERNAL_SERVER_ERROR, "Invalid private key.").into_response();
@@ -201,7 +203,15 @@ async fn handler_submit(
     let signature = signing_key.sign(message);
     let signature = hex::encode(signature.to_bytes());
 
-    let redirect_url = format!("{}?request-token={}&signature={}", redirect_url, request_token, signature);
+    let mut redirect_url = if let Ok(url) = Url::parse(&redirect_url) {
+        url
+    } else {
+        return (StatusCode::BAD_REQUEST, "Invalid redirect URL.").into_response();
+    };
+
+    redirect_url.query_pairs_mut().append_pair("request-token", request_token.as_str());
+    redirect_url.query_pairs_mut().append_pair("signature", signature.as_str());
+    let redirect_url = redirect_url.to_string();
     let mut header_map = HeaderMap::new();
     header_map.insert(HeaderName::from_static("location"), redirect_url.parse().unwrap());
 
